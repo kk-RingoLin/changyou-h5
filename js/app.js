@@ -453,9 +453,11 @@ function showShareGuide() {
       '<div class="share-arrow"><img src="' + ASSET + 'icons/share.png"/></div>' +
       '<div class="share-text">点击右上角 <b>···</b><br/>选择「发送给朋友」或「分享到朋友圈」</div>' +
     '</div>' +
-    '<div class="share-close-tip">点击空白处关闭</div>';
-  mask.onclick = function() { mask.remove(); };
+    '<div class="share-close-btn">我知道了</div>';
+  var btn = null;
   document.body.appendChild(mask);
+  btn = mask.querySelector('.share-close-btn');
+  btn.onclick = function(e) { e.stopPropagation(); mask.remove(); };
 }
 
 function copyToClipboard(text) {
