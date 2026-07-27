@@ -434,10 +434,47 @@ function adminApprove(id) {
 function previewImage(url) { window.open(url, '_blank'); }
 function openMap(addr) { window.open('https://uri.amap.com/search?keyword=' + encodeURIComponent(addr), '_blank'); }
 function shareLink() {
-  if (navigator.share) { navigator.share({ title: '一起唱游', url: location.href }); }
-  else { copyToClipboard(location.href); toast('链接已复制，去微信粘贴给朋友吧'); }
+  var ua = navigator.userAgent;
+  if (/MicroMessenger/i.test(ua)) {
+    showShareGuide();
+  } else if (navigator.share) {
+    navigator.share({ title: '一起唱游', url: location.href });
+  } else {
+    copyToClipboard(location.href);
+    toast('链接已复制，去微信粘贴给朋友吧');
+  }
 }
-function copyToClipboard(text) { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
+
+function showShareGuide() {
+  var mask = document.createElement('div');
+  mask.className = 'share-mask';
+  mask.innerHTML =
+    '<div class="share-guide">' +
+      '<div class="share-arrow"><img src="' + ASSET + 'icons/share.png"/></div>' +
+      '<div class="share-text">点击右上角 <b>···</b><br/>选择「发送给朋友」或「分享到朋友圈」</div>' +
+    '</div>' +
+    '<div class="share-close-tip">点击空白处关闭</div>';
+  mask.onclick = function() { mask.remove(); };
+  document.body.appendChild(mask);
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(function() { execCopy(text); });
+  } else {
+    execCopy(text);
+  }
+}
+function execCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  ta.remove();
+}
 
 /* ========== 页面：发布活动 ========== */
 function renderPublish(app) {
