@@ -522,9 +522,11 @@ function renderPublish(app) {
   renderTabBar('publish');
 
   app.innerHTML = html;
-  app._publish = { cover: '', media: [], past: [], qr: '', flows: [], feeType: 'free' };
+  publishState = { cover: '', media: [], past: [], qr: '', flows: [], feeType: 'free' };
   // 默认省份
   onProvinceChange();
+  // 默认费用类型按钮高亮
+  onFeeType('free');
   // 默认日期
   var tomorrow = new Date(Date.now() + 86400000);
   document.getElementById('pDate').value = tomorrow.toISOString().slice(0, 10);
@@ -826,6 +828,8 @@ function submitVenue() {
 }
 
 /* ========== 页面：管理中心 ========== */
+var adminTab = 'event';
+
 function renderAdmin(app) {
   store.init();
   if (!store.isAdmin()) {
@@ -837,55 +841,139 @@ function renderAdmin(app) {
     app.innerHTML = html;
     return;
   }
-  renderAdminTab(app, 'pending');
+  renderAdminTab(app, adminTab);
 }
 
 function renderAdminTab(app, tab) {
+  adminTab = tab;
   var eStats = store.getAuditStats();
-  var aStats = store.getAppStats();
+  var pendingApps = store.getApplications('pending');
+  var orgPendingCount = pendingApps.filter(function(a) { return a.type === 'organizer'; }).length;
+  var venuePendingCount = pendingApps.filter(function(a) { return a.type === 'venue'; }).length;
+
   var html = navbar('管理中心');
   html += '<div class="admin-tabs">' +
-    '<div class="admin-tab ' + (tab === 'pending' ? 'on' : '') + '" onclick="renderAdminTab2(\'pending\')">待审活动(' + eStats.pending + ')</div>' +
-    '<div class="admin-tab ' + (tab === 'apps' ? 'on' : '') + '" onclick="renderAdminTab2(\'apps\')">身份申请(' + aStats.pending + ')</div>' +
-    '<div class="admin-tab ' + (tab === 'done' ? 'on' : '') + '" onclick="renderAdminTab2(\'done\')">已处理</div>' +
+    '<div class="admin-tab ' + (tab === 'event' ? 'on' : '') + '" onclick="renderAdminTab2(\'event\')">活动管理' + (eStats.pending ? '(' + eStats.pending + ')' : '') + '</div>' +
+    '<div class="admin-tab ' + (tab === 'organizer' ? 'on' : '') + '" onclick="renderAdminTab2(\'organizer\')">主理人管理' + (orgPendingCount ? '(' + orgPendingCount + ')' : '') + '</div>' +
+    '<div class="admin-tab ' + (tab === 'venue' ? 'on' : '') + '" onclick="renderAdminTab2(\'venue\')">场地管理' + (venuePendingCount ? '(' + venuePendingCount + ')' : '') + '</div>' +
   '</div>';
 
-  if (tab === 'pending') {
-    var list = store.getAuditList('pending');
-    if (!list.length) html += '<div class="empty"><div class="empty-text">暂无待审核活动</div></div>';
-    list.forEach(function(e) {
-      html += '<div class="admin-card">' +
-        '<div class="ac-title">' + e.title + '</div>' +
-        '<div class="ac-sub">' + e.dateText + ' · ' + e.address + '</div>' +
-        '<div class="ac-row"><span style="font-size:0.55rem;color:#9A97A8;">' + e.createdText + '</span><span class="admin-badge a-pending">待审核</span></div>' +
-        '<div class="admin-actions"><button class="btn-ghost" onclick="navigate(\'#/detail/' + e.id + '\')">查看详情</button></div>' +
-      '</div>';
-    });
-  } else if (tab === 'apps') {
-    var apps = store.getApplications('pending');
-    if (!apps.length) html += '<div class="empty"><div class="empty-text">暂无待审核申请</div></div>';
-    apps.forEach(function(a) {
-      html += '<div class="admin-card">' +
-        '<div class="ac-row"><div style="display:flex;align-items:center;gap:0.3rem;"><img src="' + a.avatar + '" style="width:1.2rem;height:1.2rem;border-radius:50%;"/><span class="ac-title">' + a.nickname + '</span></div><span class="admin-badge a-pending">' + a.typeText + '</span></div>';
-      if (a.type === 'organizer') {
-        html += '<div class="ac-sub">方向：' + a.form.field + '</div><div class="ac-sub">' + a.form.exp + '</div><div class="ac-sub">微信：' + a.form.wechatId + '</div>';
-      } else {
-        html += '<div class="ac-sub">' + a.form.name + ' · ' + a.form.type + ' · 容纳' + a.form.capacity + '人</div><div class="ac-sub">' + a.form.address + '</div><div class="ac-sub">微信：' + a.form.wechatId + '</div>';
-      }
-      html += '<div class="ac-sub" style="color:#C0BCD0;">提交于 ' + a.createdText + '</div>';
-      html += '<div class="admin-actions"><button class="btn-ghost" onclick="reviewApp(\'' + a.id + '\',false)">拒绝</button><button class="btn-primary" onclick="reviewApp(\'' + a.id + '\',true)">通过</button></div></div>';
-    });
-  } else {
-    var eList = store.getAuditList('done');
-    var aList = store.getApplications('done');
-    eList.forEach(function(e) {
-      html += '<div class="admin-card"><div class="ac-title">' + e.title + '</div><div class="ac-sub">' + e.createdText + '</div><div class="ac-row"><span style="font-size:0.55rem;color:#9A97A8;">' + (e.auditedText || '') + '</span><span class="admin-badge ' + e.auditClass + '">' + e.auditText + '</span></div></div>';
-    });
-    aList.forEach(function(a) {
-      html += '<div class="admin-card"><div class="ac-title">' + a.nickname + ' · ' + a.typeText + '</div><div class="ac-sub">' + a.statusText + (a.note ? '：' + a.note : '') + '</div><div class="ac-sub" style="color:#C0BCD0;">' + (a.auditedText || '') + '</div></div>';
-    });
-    if (!eList.length && !aList.length) html += '<div class="empty"><div class="empty-text">暂无已处理记录</div></div>';
+  if (tab === 'event') {
+    var pendingList = store.getAuditList('pending');
+    var doneList = store.getAuditList('done');
+
+    html += '<div class="admin-section-title">待审核（' + pendingList.length + '）</div>';
+    if (pendingList.length) {
+      pendingList.forEach(function(e) {
+        html += '<div class="admin-card">' +
+          '<div class="ac-card-head" onclick="navigate(\'#/detail/' + e.id + '\')">' +
+            '<img class="ac-cover" src="' + (e.cover || '') + '"/>' +
+            '<div class="ac-head-main"><div class="ac-title">' + e.title + '</div>' +
+            '<div class="ac-sub">' + e.dateText + '</div>' +
+            '<div class="ac-sub ellipsis">' + e.address + '</div></div>' +
+            '<span class="admin-badge a-pending">待审核</span></div>' +
+          '<div class="ac-sub">主理人：' + (e.organizer && e.organizer.nickname || '') + '　微信号：' + (e.organizer && e.organizer.wechatId || '未留') + '</div>' +
+          '<div class="ac-sub" style="color:#C0BCD0;">提交于 ' + e.createdText + '</div>' +
+          '<div class="admin-actions"><button class="btn-ghost" onclick="adminRejectOpen(\'' + e.id + '\')">拒绝</button><button class="btn-primary" onclick="adminApprove(\'' + e.id + '\')">通过审核</button></div>' +
+        '</div>';
+      });
+    } else {
+      html += '<div class="empty"><div class="empty-text">没有待审核的活动</div></div>';
+    }
+
+    if (doneList.length) {
+      html += '<div class="admin-section-title">已处理（' + doneList.length + '）</div>';
+      doneList.forEach(function(e) {
+        html += '<div class="admin-card">' +
+          '<div class="ac-card-head" onclick="navigate(\'#/detail/' + e.id + '\')">' +
+            '<img class="ac-cover" src="' + (e.cover || '') + '"/>' +
+            '<div class="ac-head-main"><div class="ac-title">' + e.title + '</div>' +
+            '<div class="ac-sub">' + e.dateText + '</div></div>' +
+            '<span class="admin-badge ' + e.auditClass + '">' + e.auditText + '</span></div>' +
+          '<div class="ac-sub" style="color:#C0BCD0;">' + (e.auditedText || e.createdText) + (e.auditNote ? '　理由：' + e.auditNote : '') + '</div>' +
+        '</div>';
+      });
+    }
+
+  } else if (tab === 'organizer') {
+    var orgPending = store.getApplications('pending').filter(function(a) { return a.type === 'organizer'; });
+    var orgDone = store.getApplications('done').filter(function(a) { return a.type === 'organizer'; });
+
+    html += '<div class="admin-section-title">待审核（' + orgPending.length + '）</div>';
+    if (orgPending.length) {
+      orgPending.forEach(function(a) {
+        html += '<div class="admin-card">' +
+          '<div class="ac-card-head">' +
+            '<img class="ac-cover ac-cover-round" src="' + (a.avatar || '') + '"/>' +
+            '<div class="ac-head-main"><div class="ac-title">' + a.nickname + '</div>' +
+            '<div class="ac-sub">方向：' + (a.form.field || '') + '</div></div>' +
+            '<span class="admin-badge a-pending">待审核</span></div>' +
+          '<div class="ac-sub">经验：' + (a.form.exp || '') + '</div>' +
+          '<div class="ac-sub">微信号：' + (a.form.wechatId || '未留') + '</div>' +
+          '<div class="ac-sub" style="color:#C0BCD0;">提交于 ' + a.createdText + '</div>' +
+          '<div class="admin-actions"><button class="btn-ghost" onclick="reviewApp(\'' + a.id + '\',false)">拒绝</button><button class="btn-primary" onclick="reviewApp(\'' + a.id + '\',true)">通过</button></div>' +
+        '</div>';
+      });
+    } else {
+      html += '<div class="empty"><div class="empty-text">没有待审核的主理人申请</div></div>';
+    }
+
+    if (orgDone.length) {
+      html += '<div class="admin-section-title">已处理（' + orgDone.length + '）</div>';
+      orgDone.forEach(function(a) {
+        html += '<div class="admin-card">' +
+          '<div class="ac-card-head">' +
+            '<img class="ac-cover ac-cover-round" src="' + (a.avatar || '') + '"/>' +
+            '<div class="ac-head-main"><div class="ac-title">' + a.nickname + '</div>' +
+            '<div class="ac-sub">方向：' + (a.form.field || '') + '</div></div>' +
+            '<span class="admin-badge ' + (a.status === 'approved' ? 'a-ok' : 'a-no') + '">' + a.statusText + '</span></div>' +
+          '<div class="ac-sub" style="color:#C0BCD0;">' + (a.auditedText || a.createdText) + (a.note ? '　理由：' + a.note : '') + '</div>' +
+        '</div>';
+      });
+    }
+
+  } else if (tab === 'venue') {
+    var venuePending = store.getApplications('pending').filter(function(a) { return a.type === 'venue'; });
+    var venueDone = store.getApplications('done').filter(function(a) { return a.type === 'venue'; });
+
+    html += '<div class="admin-section-title">待审核（' + venuePending.length + '）</div>';
+    if (venuePending.length) {
+      venuePending.forEach(function(a) {
+        html += '<div class="admin-card">' +
+          '<div class="ac-card-head">' +
+            '<div class="ac-head-main"><div class="ac-title">' + (a.form.name || '') + '</div>' +
+            '<div class="ac-sub">' + (a.form.type || '') + ' · 容纳' + (a.form.capacity || '') + '人</div>' +
+            '<div class="ac-sub ellipsis">' + (a.form.address || '') + '</div></div>' +
+            '<span class="admin-badge a-pending">待审核</span></div>' +
+          '<div class="ac-sub">介绍：' + (a.form.intro || '') + '</div>';
+        if (a.form.photos && a.form.photos.length) {
+          html += '<div class="form-photos">';
+          a.form.photos.forEach(function(p) { html += '<img class="form-photo" src="' + p + '"/>'; });
+          html += '</div>';
+        }
+        html += '<div class="ac-sub">联系人：' + (a.form.wechatId || '未留') + '</div>' +
+          '<div class="ac-sub" style="color:#C0BCD0;">提交于 ' + a.createdText + '</div>' +
+          '<div class="admin-actions"><button class="btn-ghost" onclick="reviewApp(\'' + a.id + '\',false)">拒绝</button><button class="btn-primary" onclick="reviewApp(\'' + a.id + '\',true)">通过</button></div>' +
+        '</div>';
+      });
+    } else {
+      html += '<div class="empty"><div class="empty-text">没有待审核的场地申请</div></div>';
+    }
+
+    if (venueDone.length) {
+      html += '<div class="admin-section-title">已处理（' + venueDone.length + '）</div>';
+      venueDone.forEach(function(a) {
+        html += '<div class="admin-card">' +
+          '<div class="ac-card-head">' +
+            '<div class="ac-head-main"><div class="ac-title">' + (a.form.name || '') + '</div>' +
+            '<div class="ac-sub">' + (a.form.type || '') + ' · ' + (a.form.address || '') + '</div></div>' +
+            '<span class="admin-badge ' + (a.status === 'approved' ? 'a-ok' : 'a-no') + '">' + a.statusText + '</span></div>' +
+          '<div class="ac-sub" style="color:#C0BCD0;">' + (a.auditedText || a.createdText) + (a.note ? '　理由：' + a.note : '') + '</div>' +
+        '</div>';
+      });
+    }
   }
+
   html += '<div class="safe-bottom"></div>';
   app.innerHTML = html;
 }
@@ -905,7 +993,7 @@ function reviewApp(id, pass) {
   } else {
     store.reviewApplication(id, true);
     toast('已通过');
-    renderAdminTab(document.getElementById('app'), 'apps');
+    renderAdminTab(document.getElementById('app'), adminTab);
   }
 }
 function doReviewApp(id, pass) {
@@ -913,7 +1001,7 @@ function doReviewApp(id, pass) {
   store.reviewApplication(id, false, note);
   closeModal();
   toast('已拒绝');
-  renderAdminTab(document.getElementById('app'), 'apps');
+  renderAdminTab(document.getElementById('app'), adminTab);
 }
 
 /* ========== 页面：主理人主页 ========== */
