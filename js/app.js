@@ -54,6 +54,7 @@ function getRoute() {
 }
 
 function router() {
+  document.querySelectorAll('.share-mask, .mask').forEach(function(el) { el.remove(); });
   var r = getRoute();
   var app = document.getElementById('app');
   app.className = r.tab ? '' : 'no-tab';
