@@ -45,8 +45,9 @@ var routes = [
 
 function getRoute() {
   var hash = location.hash || '#/';
+  var hashPath = hash.split('?')[0];
   for (var i = 0; i < routes.length; i++) {
-    var m = hash.match(routes[i].pattern);
+    var m = hashPath.match(routes[i].pattern);
     if (m) return { fn: routes[i].render, args: m.slice(1), tab: routes[i].tab };
   }
   return { fn: renderIndex, args: [], tab: true };
@@ -224,8 +225,7 @@ function renderDetail(app, id) {
   html += '<div class="card info">' +
     rowHTML(ASSET + 'icons/cal.png', '活动时间', e.dateText + '　' + e.rangeText) +
     '<div class="row" onclick="openMap(\'' + (e.address || '').replace(/'/g, '') + '\')">' + rowHTMLBody(ASSET + 'icons/pin.png', '活动地点', e.address) + '<div class="nav-btn">导航</div></div>' +
-    '<div class="row">' + rowHTMLBody(ASSET + 'icons/users.png', '报名人数', '已报 ' + e.signupCount + ' / ' + e.maxPeople + ' 人') +
-      '<div class="progress" style="width:100%"><div class="progress-in" style="width:' + progressPct + '%"></div></div></div>' +
+    '<div class="row"><img class="ic" src="' + ASSET + 'icons/users.png"/><div class="row-main"><div class="row-label">报名人数</div><div class="row-value">已报 ' + e.signupCount + ' / ' + e.maxPeople + ' 人</div><div class="progress"><div class="progress-in" style="width:' + progressPct + '%"></div></div></div></div>' +
   '</div>';
 
   // 主理人
@@ -388,6 +388,15 @@ function saveProfile(eventId) {
 
 function closeModal() { var m = document.querySelector('.mask'); if (m) m.remove(); }
 
+function scrollToSection(id) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    toast(id === 'mySignupsSection' ? '还没有报名活动' : '还没有发起活动');
+  }
+}
+
 function adminRejectOpen(id) {
   var html = '<div class="panel-title">拒绝该活动</div>' +
     '<div class="field"><div class="field-label">拒绝理由（将展示给发起人）</div>' +
@@ -429,14 +438,38 @@ function renderPublish(app) {
   // 主理人守卫
   if (!user.organizerApproved) {
     var html = navbar('发布活动');
-    if (myApp && myApp.status === 'pending') {
-      html += '<div class="card" style="text-align:center;padding:2rem 1rem;"><div style="font-size:0.8rem;font-weight:700;color:#BA7517;">主理人申请审核中</div><div style="font-size:0.62rem;color:#9A97A8;margin-top:0.5rem;">你的申请已提交，审核通过后即可发布活动</div><div style="font-size:0.55rem;color:#C0BCD0;margin-top:0.4rem;">提交于 ' + myApp.createdText + '</div></div>';
-    } else if (myApp && myApp.status === 'rejected') {
-      html += '<div class="reject-banner">上次主理人申请未通过' + (myApp.note ? '：' + myApp.note : '') + '，请修改后重新提交</div>';
-      html += '<div style="text-align:center;padding:2rem 0;"><button class="btn-primary" style="width:60%;height:2.2rem;line-height:2.2rem;" onclick="navigate(\'#/apply?type=organizer\')">重新申请主理人</button></div>';
+    var appStatus = (myApp && myApp.status) || 'none';
+
+    // gate-hero
+    html += '<div class="gate-hero"><div class="gate-title">成为主理人</div><div class="gate-sub">通过主理人审核后，才能发起活动</div></div>';
+
+    if (appStatus === 'pending') {
+      html += '<div class="card gate-card gate-status">' +
+        '<div class="gate-status-title">主理人申请审核中</div>' +
+        '<div class="gate-desc" style="margin-top:0.3rem;">你的申请已提交，审核员正在处理，通过后就能发布活动了。通常当天完成，请耐心等待。</div>' +
+        '<div style="font-size:0.55rem;color:#C0BCD0;margin-top:0.4rem;">提交于 ' + myApp.createdText + '</div>' +
+      '</div>';
+    } else if (appStatus === 'rejected') {
+      html += '<div class="card gate-card gate-status">' +
+        '<div class="gate-status-title no">申请未通过</div>' +
+        '<div class="gate-desc" style="margin-top:0.3rem;">' + (myApp.note || '资料不完整，请补充后重新提交') + '</div>' +
+      '</div>';
+      html += '<button class="btn-primary submit-btn" onclick="navigate(\'#/apply?type=organizer\')">修改资料，重新申请</button>';
+      html += '<div class="submit-tip">提交资料 → 审核员审核 → 通过后即可发布活动</div>';
     } else {
-      html += '<div class="card" style="text-align:center;padding:2rem 1rem;"><div style="font-size:0.7rem;color:#6E6A82;margin-bottom:0.5rem;">成为主理人后即可发布活动</div><button class="btn-primary" style="width:60%;height:2.2rem;line-height:2.2rem;" onclick="navigate(\'#/apply?type=organizer\')">申请成为主理人</button></div>';
+      html += '<div class="card gate-card">' +
+        '<div class="gate-step-title">为什么需要主理人审核？</div>' +
+        '<div class="gate-desc" style="margin-top:0.3rem;">唱游吧的每一场活动都由认证主理人发起，平台审核资料真实可靠，参与者才能放心报名。审核通常当天完成。</div>' +
+        '<div class="gate-desc" style="margin-bottom:0.35rem;">你需要准备：</div>' +
+        '<div class="gate-rule"><span class="gate-rule-num">1.</span><span class="gate-rule-text">你的音乐方向（如：民谣弹唱 / 摇滚 / ukulele）</span></div>' +
+        '<div class="gate-rule"><span class="gate-rule-num">2.</span><span class="gate-rule-text">组局经验或自我介绍</span></div>' +
+        '<div class="gate-rule"><span class="gate-rule-num">3.</span><span class="gate-rule-text">微信号（仅审核员可见，用于沟通审核）</span></div>' +
+      '</div>';
+      html += '<button class="btn-primary submit-btn" onclick="navigate(\'#/apply?type=organizer\')">去申请成为主理人</button>';
+      html += '<div class="submit-tip">提交资料 → 审核员审核 → 通过后即可发布活动</div>';
     }
+
+    html += '<div class="safe-bottom"></div>';
     html += renderTabBar('publish');
     app.innerHTML = html;
     return;
@@ -924,8 +957,8 @@ function renderMy(app) {
     '<div class="my-nick">' + (user.nickname || '点击完善资料') + '</div>' +
     '<div class="my-role">' + role + '</div></div>';
   html += '<div class="my-stats">' +
-    '<div class="my-stat"><div class="my-stat-num">' + myEvents.length + '</div><div class="my-stat-label">发起活动</div></div>' +
-    '<div class="my-stat"><div class="my-stat-num">' + mySignups.length + '</div><div class="my-stat-label">已报名</div></div>' +
+    '<div class="my-stat" onclick="scrollToSection(\'myEventsSection\')" style="cursor:pointer;"><div class="my-stat-num">' + myEvents.length + '</div><div class="my-stat-label">发起活动</div></div>' +
+    '<div class="my-stat" onclick="scrollToSection(\'mySignupsSection\')" style="cursor:pointer;"><div class="my-stat-num">' + mySignups.length + '</div><div class="my-stat-label">已报名</div></div>' +
   '</div>';
 
   html += '<div class="my-section"><div class="my-section-title">账户</div>' +
@@ -934,7 +967,7 @@ function renderMy(app) {
     '<div class="my-link" onclick="navigate(\'#/apply?type=venue\')"><span class="my-link-text">场地入驻</span><span class="my-link-arrow">›</span></div></div>';
 
   if (mySignups.length) {
-    html += '<div class="my-section"><div class="my-section-title">我报名的</div>';
+    html += '<div class="my-section" id="mySignupsSection"><div class="my-section-title">我报名的</div>';
     mySignups.forEach(function(e) {
       html += '<div class="my-link" onclick="navigate(\'#/detail/' + e.id + '\')"><span class="my-link-text">' + e.title + '</span><span class="my-link-arrow">' + e.dateText + ' ›</span></div>';
     });
@@ -942,7 +975,7 @@ function renderMy(app) {
   }
 
   if (myEvents.length) {
-    html += '<div class="my-section"><div class="my-section-title">我发起的</div>';
+    html += '<div class="my-section" id="myEventsSection"><div class="my-section-title">我发起的</div>';
     myEvents.forEach(function(e) {
       html += '<div class="my-link" onclick="navigate(\'#/detail/' + e.id + '\')"><span class="my-link-text">' + e.title + '</span><span class="my-link-arrow"><span class="admin-badge ' + e.auditClass + '" style="margin-right:0.2rem;">' + e.auditText + '</span> ›</span></div>';
     });
