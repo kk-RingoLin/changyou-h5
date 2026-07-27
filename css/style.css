@@ -297,3 +297,13 @@ a { color: inherit; text-decoration: none; }
 .gate-status { text-align: center; padding: 1.2rem 0.8rem; }
 .gate-status-title { font-size: 0.8rem; font-weight: 700; color: #BA7517; }
 .gate-status-title.no { color: #C63D3D; }
+
+/* 分享引导层 */
+.share-mask { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 200; }
+.share-guide { position: absolute; top: 0.6rem; right: 0.7rem; text-align: right; color: #fff; }
+.share-arrow { width: 1.6rem; height: 1.6rem; margin-left: auto; animation: share-bounce 0.8s ease-in-out infinite; }
+.share-arrow img { width: 1.6rem; height: 1.6rem; opacity: 0.9; }
+.share-text { font-size: 0.75rem; line-height: 1.7; margin-top: 0.2rem; }
+.share-text b { font-size: 1rem; color: #8B5CFF; letter-spacing: 0.1em; }
+.share-close-tip { position: absolute; bottom: 2rem; left: 0; right: 0; text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.45); }
+@keyframes share-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-0.3rem); } }
