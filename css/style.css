@@ -305,5 +305,5 @@ a { color: inherit; text-decoration: none; }
 .share-arrow img { width: 1.6rem; height: 1.6rem; opacity: 0.9; }
 .share-text { font-size: 0.75rem; line-height: 1.7; margin-top: 0.2rem; }
 .share-text b { font-size: 1rem; color: #8B5CFF; letter-spacing: 0.1em; }
-.share-close-tip { position: absolute; bottom: 2rem; left: 0; right: 0; text-align: center; font-size: 0.6rem; color: rgba(255,255,255,0.45); }
+.share-close-btn { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); padding: 0.5rem 1.8rem; font-size: 0.7rem; color: #fff; background: rgba(139,92,255,0.9); border-radius: 2rem; }
 @keyframes share-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-0.3rem); } }
