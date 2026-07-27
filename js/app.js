@@ -339,8 +339,8 @@ function showSignupModal(id) {
   var html = '<div class="panel-title">确认报名</div>' +
     '<div class="field"><div class="field-label">留个言吧（选填，展示给主理人和小伙伴们）</div>' +
     '<textarea class="field-textarea" id="signupNote" placeholder="比如：我会弹吉他 / 我可以唱和声 / 我带个大西瓜 / 纯围观鼓掌…" maxlength="100"></textarea></div>' +
-    '<div class="field"><div class="field-label">手机号（选填，方便主理人联系）</div>' +
-    '<input class="field-input" type="tel" maxlength="11" id="signupPhone" placeholder="请输入手机号"/></div>' +
+    '<div class="field"><div class="field-label">手机号（必填，方便主理人联系）</div>' +
+    '<input class="field-input" type="tel" maxlength="11" id="signupPhone" placeholder="请输入11位手机号"/></div>' +
     '<button class="btn-primary panel-btn" onclick="doSignup(\'' + id + '\')">提交报名</button>';
   showModal(html);
 }
@@ -348,6 +348,8 @@ function showSignupModal(id) {
 function doSignup(id) {
   var note = document.getElementById('signupNote').value;
   var phone = document.getElementById('signupPhone').value;
+  if (!phone) { toast('请输入手机号'); return; }
+  if (!/^1[3-9]\d{9}$/.test(phone)) { toast('请输入正确的11位手机号'); return; }
   var r = store.signup(id, { note: note, phone: phone });
   if (!r.ok) { toast(r.msg); return; }
   document.querySelector('.mask').remove();
