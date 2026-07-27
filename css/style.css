@@ -1,4 +1,4 @@
-/* ===== 唱游吧 H5 全局样式 ===== */
+/* ===== 一起唱游 H5 全局样式 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { font-size: calc(100vw / 750 * 40); }
 body {
@@ -142,12 +142,12 @@ a { color: inherit; text-decoration: none; }
 .org-contact { flex: none; background: #F0EDFB; color: #7C4DFF; font-size: 0.6rem; padding: 0.25rem 0.5rem; border-radius: 999px; }
 
 .sign-list { }
-.sign-row { display: flex; align-items: flex-start; padding: 0.35rem 0; }
+.sign-row { display: flex; align-items: center; padding: 0.35rem 0; }
 .sign-row + .sign-row { border-top: 1px solid #F8F7FC; }
 .sign-av { width: 1.1rem; height: 1.1rem; border-radius: 50%; margin-right: 0.35rem; flex: none; }
-.sign-main { flex: 1; min-width: 0; }
-.sign-name { font-size: 0.65rem; font-weight: 600; }
-.sign-note { font-size: 0.58rem; color: #7C6B96; margin-top: 0.1rem; }
+.sign-main { display: flex; align-items: center; flex-wrap: wrap; flex: 1; min-width: 0; gap: 0.35rem; }
+.sign-name { font-size: 0.65rem; font-weight: 600; flex: none; }
+.sign-note { font-size: 0.58rem; color: #7C6B96; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .att-none { text-align: center; color: #C0BCD0; font-size: 0.62rem; padding: 0.75rem 0; }
 
 .desc { font-size: 0.65rem; color: #4A4658; line-height: 1.7; white-space: pre-wrap; }
