@@ -232,6 +232,13 @@ a { color: inherit; text-decoration: none; }
 .admin-badge.a-pending { background: #FF9800; } .admin-badge.a-ok { background: #2EB372; } .admin-badge.a-no { background: #EF5350; }
 .admin-actions { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
 .admin-actions .btn-ghost, .admin-actions .btn-primary { flex: 1; height: 1.8rem; line-height: 1.8rem; font-size: 0.62rem; }
+.admin-section-title { font-size: 0.58rem; font-weight: 700; color: #9A97A8; padding: 0.5rem 0.6rem 0.15rem; }
+.ac-card-head { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+.ac-cover { width: 2.2rem; height: 2.2rem; border-radius: 0.25rem; object-fit: cover; flex: none; }
+.ac-cover-round { border-radius: 50%; }
+.ac-head-main { flex: 1; min-width: 0; }
+.form-photos { display: flex; gap: 0.2rem; margin: 0.3rem 0; }
+.form-photo { width: 2.5rem; height: 2.5rem; border-radius: 0.25rem; object-fit: cover; }
 
 /* ===== 主理人主页 ===== */
 .org-header { text-align: center; padding: 1.2rem 0.6rem; }
