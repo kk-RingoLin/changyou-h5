@@ -1,5 +1,5 @@
 /**
- * 唱游吧 H5 版 — SPA 路由 + 页面渲染
+ * 一起唱游 H5 版 — SPA 路由 + 页面渲染
  */
 var ASSET = 'assets/';
 var BENEFITS = {
@@ -134,7 +134,7 @@ function renderIndex(app) {
   var html = '<div class="hero">' +
     '<div class="hero-deco d1"></div><div class="hero-deco d2"></div>' +
     '<div class="hero-top">' +
-      '<div class="hero-left"><div class="hero-title">唱游吧</div><div class="hero-slogan">和同城的人，一起把歌唱给风听</div></div>' +
+      '<div class="hero-left"><div class="hero-title">一起唱游</div><div class="hero-slogan">和同城的人，一起把歌唱给风听</div></div>' +
       '<div class="hero-city">' + city + '</div>' +
     '</div>' +
     '<div class="entries">' +
@@ -153,7 +153,7 @@ function renderIndex(app) {
   } else {
     html += '<div class="empty"><div class="empty-text">暂时没有活动，来发起一场吧</div></div>';
   }
-  html += '<div class="foot-note">唱游吧 · 让每一场歌唱都有同路人</div>';
+  html += '<div class="foot-note">一起唱游 · 让每一场歌唱都有同路人</div>';
   html += renderTabBar('index');
   app.innerHTML = html;
 
@@ -286,7 +286,16 @@ function renderDetail(app, id) {
   } else if (e.auditStatus === 'rejected') {
     html += '<button class="btn-primary bar-btn disabled" disabled>未通过审核</button>';
   } else if (isOrganizer) {
-    html += '<button class="btn-primary bar-btn" onclick="navigate(\'#/manage/' + id + '\')">管理报名（' + e.signupCount + '）</button>';
+    html += '<button class="btn-ghost bar-half" onclick="navigate(\'#/manage/' + id + '\')">管理(' + e.signupCount + ')</button>';
+    if (e.status === 'ended') {
+      html += '<button class="btn-primary bar-half disabled" disabled>已结束</button>';
+    } else if (signed) {
+      html += '<button class="btn-primary bar-half" onclick="navigate(\'#/success/' + id + '\')">查看群二维码</button>';
+    } else if (e.status === 'full') {
+      html += '<button class="btn-primary bar-half disabled" disabled>名额已满</button>';
+    } else {
+      html += '<button class="btn-primary bar-half" onclick="tapSignup(\'' + id + '\')">立即报名</button>';
+    }
   } else if (e.status === 'ended') {
     html += '<button class="btn-primary bar-btn disabled" disabled>活动已结束</button>';
   } else if (signed) {
@@ -423,7 +432,7 @@ function adminApprove(id) {
 function previewImage(url) { window.open(url, '_blank'); }
 function openMap(addr) { window.open('https://uri.amap.com/search?keyword=' + encodeURIComponent(addr), '_blank'); }
 function shareLink() {
-  if (navigator.share) { navigator.share({ title: '唱游吧', url: location.href }); }
+  if (navigator.share) { navigator.share({ title: '一起唱游', url: location.href }); }
   else { copyToClipboard(location.href); toast('链接已复制，去微信粘贴给朋友吧'); }
 }
 function copyToClipboard(text) { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
@@ -459,7 +468,7 @@ function renderPublish(app) {
     } else {
       html += '<div class="card gate-card">' +
         '<div class="gate-step-title">为什么需要主理人审核？</div>' +
-        '<div class="gate-desc" style="margin-top:0.3rem;">唱游吧的每一场活动都由认证主理人发起，平台审核资料真实可靠，参与者才能放心报名。审核通常当天完成。</div>' +
+        '<div class="gate-desc" style="margin-top:0.3rem;">一起唱游的每一场活动都由认证主理人发起，平台审核资料真实可靠，参与者才能放心报名。审核通常当天完成。</div>' +
         '<div class="gate-desc" style="margin-bottom:0.35rem;">你需要准备：</div>' +
         '<div class="gate-rule"><span class="gate-rule-num">1.</span><span class="gate-rule-text">你的音乐方向（如：民谣弹唱 / 摇滚 / ukulele）</span></div>' +
         '<div class="gate-rule"><span class="gate-rule-num">2.</span><span class="gate-rule-text">组局经验或自我介绍</span></div>' +
@@ -505,15 +514,9 @@ function renderPublish(app) {
     '</div>' +
     '<input class="input" id="pFeeDesc" placeholder="例如：AA约30元/人" style="display:none"/>' +
     '<div class="label" style="margin-top:0.6rem;">活动详情 <span class="req">*</span></div>' +
-    '<textarea class="textarea" id="pDesc" placeholder="详细介绍活动内容、适合人群、注意事项…" maxlength="500"></textarea>' +
-    '<div class="label" style="margin-top:0.6rem;">活动流程</div>' +
-    '<div id="flowList"></div>' +
-    '<div style="margin-top:0.3rem;"><button class="btn-ghost" style="height:1.8rem;line-height:1.8rem;font-size:0.6rem;padding:0 0.5rem;" onclick="addFlow()">+ 添加流程</button></div>' +
+    '<textarea class="textarea" id="pDesc" placeholder="详细介绍活动内容、适合人群、注意事项…&#10;&#10;活动流程参考：&#10;19:30 签到入座，自由交流&#10;20:00 轮流弹唱，每人 2 首&#10;21:20 开放合唱环节&#10;22:00 合影留念，活动结束" maxlength="800" style="height:7rem;"></textarea>' +
     '<div class="label" style="margin-top:0.6rem;">往期照片（选填，最多 10 张）</div>' +
     '<div class="photo-row" id="pastRow"><div class="photo-add" onclick="uploadPast()"><span class="photo-add-ic">+</span></div></div>' +
-    '<div class="label" style="margin-top:0.6rem;">微信群二维码 <span class="req">*</span></div>' +
-    '<div class="label-tip">报名成功后展示给已报名的小伙伴长按识别进群</div>' +
-    '<div class="photo-row" id="qrRow"><div class="photo-add" onclick="uploadQr()"><span class="photo-add-ic">+</span></div></div>' +
   '</div>' +
   '<button class="btn-primary submit-btn" onclick="submitPublish()">提交发布（需审核）</button>' +
   '<div class="submit-tip">提交后由平台管理员审核，通过后对外展示</div>' +
@@ -522,7 +525,7 @@ function renderPublish(app) {
   renderTabBar('publish');
 
   app.innerHTML = html;
-  publishState = { cover: '', media: [], past: [], qr: '', flows: [], feeType: 'free' };
+  publishState = { cover: '', media: [], past: [], qr: '', feeType: 'free' };
   // 默认省份
   onProvinceChange();
   // 默认费用类型按钮高亮
@@ -549,28 +552,10 @@ function onProvinceChange() {
   document.getElementById('pCity').innerHTML = cities.map(function(c) { return '<option>' + c + '</option>'; }).join('');
 }
 
-function addFlow() {
-  if (!publishState.flows) publishState.flows = [];
-  publishState.flows.push({ time: '', content: '' });
-  renderFlows();
-}
-function removeFlow(i) { publishState.flows.splice(i, 1); renderFlows(); }
-function renderFlows() {
-  var html = '';
-  publishState.flows.forEach(function(f, i) {
-    html += '<div style="display:flex;gap:0.3rem;margin-bottom:0.3rem;">' +
-      '<input class="input" style="width:3rem;flex:none;" type="time" value="' + f.time + '" onchange="publishState.flows[' + i + '].time=this.value"/>' +
-      '<input class="input" style="flex:1;" placeholder="流程内容" value="' + (f.content || '') + '" onchange="publishState.flows[' + i + '].content=this.value"/>' +
-      '<button class="btn-ghost" style="width:1.8rem;flex:none;height:2.1rem;font-size:0.7rem;" onclick="removeFlow(' + i + ')">×</button></div>';
-  });
-  document.getElementById('flowList').innerHTML = html;
-}
-
 var uploadTarget = '';
 function uploadCover() { uploadTarget = 'cover'; triggerFileInput(); }
 function uploadMedia() { uploadTarget = 'media'; triggerFileInput(); }
 function uploadPast() { uploadTarget = 'past'; triggerFileInput(); }
-function uploadQr() { uploadTarget = 'qr'; triggerFileInput(); }
 
 function triggerFileInput() {
   var fi = document.getElementById('fileInput');
@@ -599,9 +584,6 @@ async function handleUpload(files) {
       if (publishState.past.length >= 10) { toast('最多 10 张'); break; }
       publishState.past.push(url);
       renderPastRow();
-    } else if (uploadTarget === 'qr') {
-      publishState.qr = url;
-      renderQrRow();
     }
   }
 }
@@ -634,15 +616,6 @@ function renderPastRow() {
   if (publishState.past.length < 10) html += '<div class="photo-add" onclick="uploadPast()"><span class="photo-add-ic">+</span></div>';
   row.innerHTML = html;
 }
-function renderQrRow() {
-  var row = document.getElementById('qrRow');
-  if (!row) return;
-  if (publishState.qr) {
-    row.innerHTML = '<div class="photo-wrap"><img class="photo" src="' + publishState.qr + '"/><div class="photo-del" onclick="publishState.qr=\'\';renderQrRow()">×</div></div><div class="photo-add" onclick="uploadQr()"><span class="photo-add-ic">+</span></div>';
-  } else {
-    row.innerHTML = '<div class="photo-add" onclick="uploadQr()"><span class="photo-add-ic">+</span></div>';
-  }
-}
 
 function submitPublish() {
   var user = store.getUser();
@@ -663,14 +636,12 @@ function submitPublish() {
   if (!maxP || maxP < 1) return toast('请填写人数上限');
   var desc = document.getElementById('pDesc').value.trim();
   if (!desc) return toast('请填写活动详情');
-  if (!publishState.qr) return toast('请上传微信群二维码');
   var prov = document.getElementById('pProvince').value;
   var city = document.getElementById('pCity').value;
   var feeDesc = document.getElementById('pFeeDesc').value;
   var feeType = publishState.feeType || 'free';
 
   var media = publishState.media.length ? publishState.media : [{ type: 'image', url: publishState.cover }];
-  var flows = publishState.flows.filter(function(f) { return f.time && f.content; });
 
   var id = store.publishEvent({
     title: title, cover: publishState.cover, media: media,
@@ -678,8 +649,7 @@ function submitPublish() {
     city: city, address: prov + city + ' · ' + addr,
     maxPeople: maxP, feeType: feeType, feeDesc: feeType === 'free' ? '' : feeDesc,
     organizer: { openid: user.openid, nickname: user.nickname, avatar: user.avatar, intro: user.intro || '' },
-    desc: desc, flows: flows, pastPhotos: publishState.past,
-    groupQr: publishState.qr
+    desc: desc, flows: [], pastPhotos: publishState.past
   });
   if (!id) { toast('发布失败'); return; }
   toast('已提交，等待审核');
@@ -884,14 +854,24 @@ function renderAdminTab(app, tab) {
     if (doneList.length) {
       html += '<div class="admin-section-title">已处理（' + doneList.length + '）</div>';
       doneList.forEach(function(e) {
+        var closedBadge = e.closed ? '<span class="admin-badge a-no" style="margin-left:0.2rem;">已下架</span>' : '';
         html += '<div class="admin-card">' +
           '<div class="ac-card-head" onclick="navigate(\'#/detail/' + e.id + '\')">' +
             '<img class="ac-cover" src="' + (e.cover || '') + '"/>' +
             '<div class="ac-head-main"><div class="ac-title">' + e.title + '</div>' +
             '<div class="ac-sub">' + e.dateText + '</div></div>' +
-            '<span class="admin-badge ' + e.auditClass + '">' + e.auditText + '</span></div>' +
-          '<div class="ac-sub" style="color:#C0BCD0;">' + (e.auditedText || e.createdText) + (e.auditNote ? '　理由：' + e.auditNote : '') + '</div>' +
-        '</div>';
+            '<span class="admin-badge ' + e.auditClass + '">' + e.auditText + '</span>' + closedBadge + '</div>' +
+          '<div class="ac-sub" style="color:#C0BCD0;">' + (e.auditedText || e.createdText) + (e.auditNote ? '　理由：' + e.auditNote : '') + '</div>';
+        if (e.auditStatus === 'approved') {
+          html += '<div class="admin-actions">';
+          if (e.closed) {
+            html += '<button class="btn-ghost" onclick="adminOnlineEvent(\'' + e.id + '\')">上架</button>';
+          } else {
+            html += '<button class="btn-ghost" onclick="adminOfflineEvent(\'' + e.id + '\')">下架</button>';
+          }
+          html += '<button class="btn-ghost" style="color:#EF5350;background:#FDECEC;" onclick="adminDeleteEvent(\'' + e.id + '\')">删除</button></div>';
+        }
+        html += '</div>';
       });
     }
 
@@ -927,8 +907,11 @@ function renderAdminTab(app, tab) {
             '<div class="ac-head-main"><div class="ac-title">' + a.nickname + '</div>' +
             '<div class="ac-sub">方向：' + (a.form.field || '') + '</div></div>' +
             '<span class="admin-badge ' + (a.status === 'approved' ? 'a-ok' : 'a-no') + '">' + a.statusText + '</span></div>' +
-          '<div class="ac-sub" style="color:#C0BCD0;">' + (a.auditedText || a.createdText) + (a.note ? '　理由：' + a.note : '') + '</div>' +
-        '</div>';
+          '<div class="ac-sub" style="color:#C0BCD0;">' + (a.auditedText || a.createdText) + (a.note ? '　理由：' + a.note : '') + '</div>';
+        if (a.status === 'approved') {
+          html += '<div class="admin-actions"><button class="btn-ghost" style="color:#EF5350;background:#FDECEC;" onclick="adminRevokeApproval(\'organizer\',\'' + a.openid + '\')">撤销资格</button></div>';
+        }
+        html += '</div>';
       });
     }
 
@@ -968,8 +951,11 @@ function renderAdminTab(app, tab) {
             '<div class="ac-head-main"><div class="ac-title">' + (a.form.name || '') + '</div>' +
             '<div class="ac-sub">' + (a.form.type || '') + ' · ' + (a.form.address || '') + '</div></div>' +
             '<span class="admin-badge ' + (a.status === 'approved' ? 'a-ok' : 'a-no') + '">' + a.statusText + '</span></div>' +
-          '<div class="ac-sub" style="color:#C0BCD0;">' + (a.auditedText || a.createdText) + (a.note ? '　理由：' + a.note : '') + '</div>' +
-        '</div>';
+          '<div class="ac-sub" style="color:#C0BCD0;">' + (a.auditedText || a.createdText) + (a.note ? '　理由：' + a.note : '') + '</div>';
+        if (a.status === 'approved') {
+          html += '<div class="admin-actions"><button class="btn-ghost" style="color:#EF5350;background:#FDECEC;" onclick="adminRevokeApproval(\'venue\',\'' + a.openid + '\')">撤销资格</button></div>';
+        }
+        html += '</div>';
       });
     }
   }
@@ -1001,6 +987,35 @@ function doReviewApp(id, pass) {
   store.reviewApplication(id, false, note);
   closeModal();
   toast('已拒绝');
+  renderAdminTab(document.getElementById('app'), adminTab);
+}
+
+function adminOfflineEvent(id) {
+  store.offlineEvent(id);
+  toast('已下架');
+  renderAdminTab(document.getElementById('app'), adminTab);
+}
+function adminOnlineEvent(id) {
+  store.onlineEvent(id);
+  toast('已上架');
+  renderAdminTab(document.getElementById('app'), adminTab);
+}
+function adminDeleteEvent(id) {
+  var html = '<div class="panel-title">确认删除活动？</div>' +
+    '<div style="font-size:0.62rem;color:#9A97A8;text-align:center;margin-bottom:0.6rem;">删除后无法恢复，活动数据和报名记录都会清除</div>' +
+    '<button class="btn-primary panel-btn" style="background:linear-gradient(135deg,#EF5350,#E53935);" onclick="doDeleteEvent(\'' + id + '\')">确认删除</button>' +
+    '<div class="panel-cancel" onclick="closeModal()">取消</div>';
+  showModal(html);
+}
+function doDeleteEvent(id) {
+  store.deleteEvent(id);
+  closeModal();
+  toast('已删除');
+  renderAdminTab(document.getElementById('app'), adminTab);
+}
+function adminRevokeApproval(type, openid) {
+  store.revokeApproval(type, openid);
+  toast('已撤销资格');
   renderAdminTab(document.getElementById('app'), adminTab);
 }
 
@@ -1071,7 +1086,7 @@ function renderMy(app) {
   }
 
   html += '<div class="my-section"><div class="my-link" onclick="navigate(\'#/admin\')"><span class="my-link-text">平台管理</span><span class="my-link-arrow">›</span></div></div>';
-  html += '<div class="foot-note">唱游吧 · 让每一场歌唱都有同路人</div>';
+  html += '<div class="foot-note">一起唱游 · 让每一场歌唱都有同路人</div>';
   html += renderTabBar('my');
   app.innerHTML = html;
 }
@@ -1107,7 +1122,7 @@ function renderManage(app, id) {
   html += '<div class="card"><div class="sec-title">报名列表（' + signs.length + '）</div>';
   if (signs.length) {
     signs.forEach(function(s) {
-      html += '<div class="sign-row"><img class="sign-av" src="' + (s.avatar || '') + '"/><div class="sign-main"><div class="sign-name">' + s.nickname + (s.phone ? ' · ' + s.phone : '') + '</div>' + (s.note ? '<div class="sign-note">' + s.note + '</div>' : '') + '<div style="font-size:0.5rem;color:#C0BCD0;margin-top:0.1rem;">' + s.createdText + '</div></div></div>';
+      html += '<div class="sign-row"><img class="sign-av" src="' + (s.avatar || '') + '"/><div class="sign-main"><div class="sign-name">' + s.nickname + (s.phone ? ' · ' + s.phone : '') + '</div>' + (s.note ? '<div class="sign-note">' + s.note + '</div>' : '') + '<div style="font-size:0.5rem;color:#C0BCD0;width:100%;">' + s.createdText + '</div></div></div>';
     });
   } else {
     html += '<div class="att-none">还没有人报名</div>';
@@ -1115,7 +1130,10 @@ function renderManage(app, id) {
   html += '</div>';
   html += '<div class="card"><div class="sec-title">群二维码</div>';
   if (e.groupQr) html += '<img class="qr-img" src="' + e.groupQr + '" style="width:6rem;height:6rem;"/>';
-  html += '</div>';
+  else html += '<div class="att-none">暂无群二维码</div>';
+  html += '<div style="margin-top:0.4rem;"><button class="btn-ghost" style="height:1.8rem;line-height:1.8rem;font-size:0.62rem;" onclick="uploadGroupQr(\'' + id + '\')">上传/更换群二维码</button></div>';
+  html += '<div class="label-tip" style="margin-top:0.25rem;">联系主理人获取微信群二维码后上传，报名成功的人可看到</div></div>';
+  html += '<input type="file" id="qrFileInput" accept="image/*" style="display:none"/>';
   html += '<div class="safe-bottom"></div>';
   app.innerHTML = html;
 }
@@ -1123,6 +1141,26 @@ function renderManage(app, id) {
 /* ========== 通用导航栏 ========== */
 function navbar(title) {
   return '<div class="navbar"><div class="navbar-back" onclick="history.back()"><span class="navbar-back-arrow">‹</span><span>返回</span></div><div class="navbar-title">' + title + '</div></div>';
+}
+
+/* ========== 群二维码上传（管理页） ========== */
+var qrTargetEventId = '';
+function uploadGroupQr(eventId) {
+  qrTargetEventId = eventId;
+  var fi = document.getElementById('qrFileInput');
+  if (!fi) return;
+  fi.value = '';
+  fi.click();
+}
+document.addEventListener('change', function(e) {
+  if (e.target.id === 'qrFileInput') handleQrUpload(e.target.files);
+}, true);
+async function handleQrUpload(files) {
+  if (!files || !files.length) return;
+  var url = await store.compressImage(files[0], 800);
+  store.setGroupQr(qrTargetEventId, url);
+  toast('群二维码已上传');
+  renderManage(document.getElementById('app'), qrTargetEventId);
 }
 
 /* ========== 启动 ========== */
