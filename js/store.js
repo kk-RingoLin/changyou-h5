@@ -356,7 +356,7 @@ function getEventList(opts) {
   var tab = opts.tab || 'all';
   var keyword = (opts.keyword || '').trim().toLowerCase();
   var now = Date.now();
-  var list = readEvents().filter(function(e) { return e.auditStatus === 'approved'; }).map(decorate);
+  var list = readEvents().filter(function(e) { return e.auditStatus === 'approved' && !e.closed; }).map(decorate);
   if (tab === 'week') {
     list = list.filter(function(e) { return e.status !== 'ended' && e.startTime - now <= 7 * 86400000; });
   }
@@ -376,7 +376,7 @@ function getEventList(opts) {
 }
 
 function getHotEvents() {
-  return readEvents().filter(function(e) { return e.auditStatus === 'approved'; }).map(decorate)
+  return readEvents().filter(function(e) { return e.auditStatus === 'approved' && !e.closed; }).map(decorate)
     .filter(function(e) { return e.status !== 'ended'; })
     .sort(function(a, b) { return b.signupCount - a.signupCount; }).slice(0, 3);
 }
@@ -457,7 +457,7 @@ function getOrganizer(openid) {
 }
 
 function getOrganizerEvents(openid) {
-  return readEvents().filter(function(e) { return e.publisherOpenid === openid && e.auditStatus === 'approved'; })
+  return readEvents().filter(function(e) { return e.publisherOpenid === openid && e.auditStatus === 'approved' && !e.closed; })
     .map(decorate).sort(function(a, b) { return b.createdAt - a.createdAt; });
 }
 
@@ -499,6 +499,37 @@ function getEventSignups(eventId) {
 }
 
 function closeEvent(id, closed) { updateEvent(id, { closed: closed !== false }); }
+
+function setGroupQr(id, qr) { updateEvent(id, { groupQr: qr }); }
+
+function offlineEvent(id) { updateEvent(id, { closed: true }); }
+function onlineEvent(id) { updateEvent(id, { closed: false }); }
+
+function deleteEvent(id) {
+  var events = readEvents().filter(function(e) { return e.id !== id; });
+  writeEvents(events);
+  var signs = readSigns().filter(function(s) { return s.eventId !== id; });
+  writeSigns(signs);
+}
+
+function revokeApproval(type, openid) {
+  var apps = readApps();
+  var app = apps.find(function(a) { return a.type === type && a.openid === openid && a.status === 'approved'; });
+  if (app) {
+    app.status = 'rejected';
+    app.note = '管理员撤销资格';
+    app.auditedAt = Date.now();
+    writeApps(apps);
+  }
+  if (openid === getUser().openid) {
+    if (type === 'organizer') setUser({ organizerApproved: false });
+    else setUser({ venueApproved: false, venue: null });
+  }
+}
+
+function deleteApplication(id) {
+  writeApps(readApps().filter(function(a) { return a.id !== id; }));
+}
 
 /** H5 版 saveFile：DataURL 直接返回，路径文件原样返回 */
 function saveFile(tempPath) {
@@ -551,5 +582,7 @@ var store = {
   getAuditList: getAuditList, getAuditStats: getAuditStats,
   getMyEvents: getMyEvents, getMySignups: getMySignups,
   getEventSignups: getEventSignups, closeEvent: closeEvent,
+  setGroupQr: setGroupQr, offlineEvent: offlineEvent, onlineEvent: onlineEvent,
+  deleteEvent: deleteEvent, revokeApproval: revokeApproval, deleteApplication: deleteApplication,
   saveFile: saveFile, compressImage: compressImage, fileToDataURL: fileToDataURL
 };
